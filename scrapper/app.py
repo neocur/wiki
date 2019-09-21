@@ -1,46 +1,66 @@
-from flask import Flask, request
-from selenium import webdriver
-from selenium.webdriver.support.ui import Select
-import requests, os
+#-*- coding: utf-8 -*-
 
-#application = Flask(__name__)
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from bs4 import BeautifulSoup
+import os
+
 tankauct_id = os.environ.get('TANKAUCT_ID')
 tankauct_pw = os.environ.get('TANKAUCT_PW')
 
-#@application.route('/')
-#def index_home():
-#    return 'TEST!
+options = Options()
+options.add_argument('--headless')
+options.add_argument('--window-size=1920x1080')
+options.add_argument('--disable-gpu')
 
-browser = webdriver.Chrome('/usr/local/bin/chromedriver')
-browser.implicitly_wait(3)
+def main():
+    browser = webdriver.Chrome(executable_path='/usr/local/bin/chromedriver', options=options)
+    #browser.implicitly_wait(3)
 
-browser.get('http://www.tankauction.co.kr/')
+    browser.get('http://www.tankauction.co.kr/')
 
-browser.find_element_by_id('client_id').send_keys(tankauct_id)
-browser.find_element_by_id('pwd_dummy').click()
-browser.find_element_by_id('passwd').send_keys(tankauct_pw)
-browser.find_element_by_id('passwd').submit()
-browser.implicitly_wait(3)
+    element = WebDriverWait(browser, 20).until(
+        EC.presence_of_element_located((By.ID, 'client_id'))
+    )
 
-browser.get('http://www.tankauction.co.kr/auction/ca_addr.php?sido=41&gugun=117&state=1,2,17,18')
+    browser.find_element_by_id('client_id').send_keys(tankauct_id)
+    browser.find_element_by_id('pwd_dummy').click()
+    browser.find_element_by_id('passwd').send_keys(tankauct_pw)
+    browser.find_element_by_id('passwd').submit()
 
-Select(browser.find_element_by_name('state')).select_by_value('1')
-Select(browser.find_element_by_name('s_class')).select_by_value('1')
+    element = WebDriverWait(browser, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, \
+            "#wrap > div.login_box > div.fright > div > div.member_ment.right")))
 
-browser.find_element_by_xpath('//*[@id="auct_addr"]/div[2]/table/tbody/tr[4]/td[4]/input[7]').click()
+    browser.find_element_by_xpath('//*[@id="wrap"]/div[1]/li[1]/a').click()
+    browser.find_element_by_xpath('//*[@id="wrap"]/div[2]/ul/li[3]/a').click()
+    browser.find_element_by_xpath('//*[@id="auct_addr"]/div[1]/ul/li[9]/a').click()
+    browser.find_element_by_xpath('//*[@id="auct_addr"]/div[2]/table/tbody/tr[1]/td/ul/li[18]/a').click()
 
-browser.implicitly_wait(3)
-#browser.find_element_by_xpath('//*[@id="auct_list"]').screenshot_as_png('image.png')
-#auct_list = browser.find_elements_by_tag_name('//*[@id="list_body"]/tr')
-#browser.find_element_by_xpath('//*[@id="auct_list"]/table').screenshot_as_png('image.png')
+    Select(browser.find_element_by_name('state')).select_by_value('1')
+    Select(browser.find_element_by_name('s_class')).select_by_value('1')
+    browser.find_element_by_xpath('//*[@id="auct_addr"]/div[2]/table/tbody/tr[4]/td[4]/input[7]').click()
+    element = WebDriverWait(browser, 10).until(
+        EC.presence_of_element_located((By.ID, 'auct_list')))
 
-auct_table = browser.find_elements_by_xpath('//*[@id="list_body"]/tr')
+    #browser.find_element_by_id('auct_list').screenshot('test.png')
 
-for auct_l in auct_table:
-    print(auct_l.text)
-    print('\n')
+    #html = browser.page_source
+    #soup = BeautifulSoup(html , 'html.parser')
+    #auct_table = soup.select('#list_body')
 
-browser.close()
+    #for auct_l in auct_table:
+    #    print(auct_l.text.strip())
 
-#if __name__ == '__main__':
-#    application.run()
+    auct_table = browser.find_elements_by_xpath('//*[@id="list_body"]/tr')
+
+    for auct_l in auct_table:
+        print(auct_l.text.strip() + '\n')
+
+    browser.quit()
+
+if __name__ == "__main__":
+    main()
