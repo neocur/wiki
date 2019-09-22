@@ -6,6 +6,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, HtmlContent
+from datetime import date
 import os
 
 tankauct_id = os.environ.get('TANKAUCT_ID')
@@ -15,6 +18,11 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--window-size=1920x1080')
 options.add_argument('--disable-gpu')
+
+today = date.today()
+from_email='neocur@gmail.com', 'Paul Seo'
+to_emails='neocur@naver.com', 'neocur@daum.net'
+subject='New auction list {0}'.format(today)
 
 def main():
     browser = webdriver.Chrome(executable_path='/usr/local/bin/chromedriver', options=options)
@@ -48,17 +56,32 @@ def main():
 
     #browser.find_element_by_id('auct_list').screenshot('test.png')
 
-    #html = browser.page_source
-    #soup = BeautifulSoup(html , 'html.parser')
-    #auct_table = soup.select('#list_body')
+    html = browser.page_source
+    soup = BeautifulSoup(html , 'html.parser')
+    #auct_table = soup.select('table.tbl_list')
+    auct_table = soup.find(class_='tbl_list')
 
-    #for auct_l in auct_table:
-    #    print(auct_l.text.strip())
+    html_content = "{0}".format(auct_table)
 
-    auct_table = browser.find_elements_by_xpath('//*[@id="list_body"]/tr')
+    print(html_content)
+    print(from_email)
+    print(to_emails)
+    print(subject)
 
-    for auct_l in auct_table:
-        print(auct_l.text.strip() + '\n')
+    message = Mail(
+        from_email=from_email,
+        to_emails=to_emails,
+        subject=subject,
+        html_content=html_content)
+
+    try:
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        response = sg.send(message=message)
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+    except Exception as e:
+        print(e.message)
 
     browser.quit()
 
