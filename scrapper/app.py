@@ -20,9 +20,12 @@ options.add_argument('--window-size=1920x1080')
 options.add_argument('--disable-gpu')
 
 today = date.today()
-from_email='neocur@gmail.com', 'Paul Seo'
-to_emails='neocur@naver.com', 'neocur@daum.net'
-subject='New auction list {0}'.format(today)
+from_email = 'neocur@gmail.com', 'Paul Seo'
+subject = 'New auction list {0}'.format(today)
+to_emails = [
+    ('neocur@naver.com', 'Paul Seo'),
+    ('neocur@daum.net', 'Hyun Seo')
+]
 
 def main():
     browser = webdriver.Chrome(executable_path='/usr/local/bin/chromedriver', options=options)
@@ -62,11 +65,6 @@ def main():
     auct_table = soup.find(class_='tbl_list')
 
     html_content = "{0}".format(auct_table)
-
-    print(html_content)
-    print(from_email)
-    print(to_emails)
-    print(subject)
 
     message = Mail(
         from_email=from_email,
